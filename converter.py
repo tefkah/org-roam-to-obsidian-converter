@@ -19,11 +19,14 @@ def read_file(path):
     return oldlines 
 
         
-def convert_link(line):
-    if(re.findall(r"\[\[file:([^\]]+)\]\[[^\]]+\]\]", line)):
-        print("ha")
+def convert_link(line, wiki):
+    links=re.findall(r"\[\[file:([^\]]+)\]\[([^\]]+)\]\]", line)
+    if(links):
         line=re.sub("\.org", ".md", line)
-        line=re.sub(r"\[\[file:([^\]]+)\]\[[^\]]+\]\]", r"[[\1]]", line)
+        if(wiki):
+            line=re.sub(r"\[\[file:([^\]]+)\]\[[^\]]+\]\]", r"[[\1]]", line)
+        else:
+            line=re.sub(r"\[\[file:([^\]]+)\]\[([^\]]+)\]\]", r"[\2](\1)", line)
     return line
 
 def convert_math(line):
@@ -43,7 +46,7 @@ def convert_image(line):
        line=re.sub(r"(\[\[[^\]]+\]\])", r"\!\1", line)
        return line
 
-def convert_file(lines):
+def convert_file(lines, wiki):
     newlines=[]
     for i, line in enumerate(lines):
         if(line[0]=="#"):
@@ -67,7 +70,7 @@ def convert_file(lines):
             elif(line[1]=="e"):
                 line=line+"$$\n"
         line=convert_image(line)
-        line=convert_link(line)
+        line=convert_link(line, wiki)
         newlines.append(line)
     return newlines
 
@@ -85,26 +88,27 @@ def writefile(path, lines, output):
 
 
             
-def shebang(path, output):
+def shebang(path, output, wiki):
     org=read_file(path)
-    new = convert_file(org)
+    new = convert_file(org, wiki)
     writefile(path, new, output)
 
 def main():    
     argument = parser.parse_args()
     path=argument.PATH
     output=argument.output_directory
+    wiki=argument.wiki
     if(argument.directory):
         if(argument.recursive):
             for root, dirs, files in os.walk(path):
                 for file in files:
                     if file.endswith(".org"):
-                        shebang(path +"/"+file, output)
+                        shebang(path +"/"+file, output, wiki)
         else:
             for file in os.listdir(path):
                 if file.endswith(".org"):
-                    shebang(path+"/"+file, output)
+                    shebang(path+"/"+file, output, wiki)
     else:
-        shebang(path, output)
+        shebang(path, output, wiki)
 main()
     
