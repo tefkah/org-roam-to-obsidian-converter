@@ -10,12 +10,33 @@ parser.add_argument('PATH', help='path to the file or directory')
 parser.add_argument('-d', '--directory', help='convert all the org-files in a specific directory instead of a single file', required=False, default=[], action= 'store_true')
 parser.add_argument('-o', '--output_directory', help='directory where to place the new file(s), defaults to same directory as the file', required=False, default=[], action='store')
 parser.add_argument('-r', '--recursive', help='recursively convert all files in a directory, requires -d', required=False, default=[], action='store_true')
+parser.add_argument('-w', '--wiki', help='Convert org links to [[wiki]] links, otherwise converts them to []() markdown links', action='store_true')
+
+
 def read_file(path):
     with open(path, "r") as f:
         oldlines = f.readlines()
     return oldlines 
 
         
+def convert_link(line):
+    if(re.findall(r"\[\[file:([^\]]+)\]\[[^\]]+\]\]", line)):
+        print("ha")
+        line=re.sub("\.org", ".md", line)
+        line=re.sub(r"\[\[file:([^\]]+)\]\[[^\]]+\]\]", r"[[\1]]", line)
+    return line
+
+def convert_math(line):
+    if(line[0]=="\\"):
+        if(line[1]=="]" or line[1]=="["):
+            line[:1]="$$"
+        elif(line[1]=="(" or line[1]==")"):
+            line[:1]="$"
+        elif(line[1]=="b"):
+            line="$$"+line
+        elif(line[1]=="e"):
+            line=line+"$$"
+    return line
 
 def convert_file(lines):
     newlines=[]
@@ -31,7 +52,16 @@ def convert_file(lines):
                 line=""
         elif(line[0]=="*"):
             line= re.sub("\*", "#", line)
-        line=re.sub("\.org", ".md", line)
+        elif(line[0]=="\\"):
+            if(line[1]=="]" or line[1]=="["):
+                line=re.sub(r"\\[\[\]]", "$$", line)
+            elif(line[1]=="(" or line[1]==")"):
+                line=re.sub(r"\\[\(\)]", "$", line)
+            elif(line[1]=="b"):
+                line="$$\n"+line
+            elif(line[1]=="e"):
+                line=line+"$$"
+        line=convert_link(line)
         newlines.append(line)
     return newlines
 
@@ -40,13 +70,14 @@ def writefile(path, lines, output):
         if(os.path.isdir(output)!=True):
             os.mkdir(output)
         filename=re.findall(r"[^/]+\.org", path)[0]
-        print(output)
         with open(output + "/" + filename[:-3] + "md", "w") as f:
             f.writelines(lines)
     else:
          with open(path[:-3] + "md", "w") as f:
             f.writelines(lines)
 
+
+            
 def shebang(path, output):
     org=read_file(path)
     new = convert_file(org)
