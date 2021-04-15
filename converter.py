@@ -38,6 +38,11 @@ def convert_math(line):
             line=line+"$$"
     return line
 
+
+def convert_image(line):
+       line=re.sub(r"(\[\[[^\]]+\]\])", r"\!\1", line)
+       return line
+
 def convert_file(lines):
     newlines=[]
     for i, line in enumerate(lines):
@@ -61,9 +66,11 @@ def convert_file(lines):
                 line="$$\n"+line
             elif(line[1]=="e"):
                 line=line+"$$\n"
+        line=convert_image(line)
         line=convert_link(line)
         newlines.append(line)
     return newlines
+
 
 def writefile(path, lines, output):
     if(output):
