@@ -60,7 +60,7 @@ def convert_file(lines):
             elif(line[1]=="b"):
                 line="$$\n"+line
             elif(line[1]=="e"):
-                line=line+"$$"
+                line=line+"$$\n"
         line=convert_link(line)
         newlines.append(line)
     return newlines
